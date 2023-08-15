@@ -1,0 +1,11 @@
+version: '3'
+
+services:
+  development:
+    image: ubuntu:latest
+    container_name: Trends
+    volumes:
+      - /home/conrado/server/Conrado/Projects/Trends:/src
+    ports:
+      - "6000:6000"
+    command: tail -f /dev/null
