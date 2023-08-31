@@ -1,37 +1,39 @@
 import os
-import discord
 from dotenv import load_dotenv
+import discord
+from discord import app_commands
+from langchain.llms import OpenAI
 
 # Load the .env file
 load_dotenv()
 token = os.getenv('DISCORD_TOKEN')
+guild_id = os.getenv('DISCORD_GUILD')
+openai_key = os.getenv('OPENAI_KEY')
 
-# Intents
-intents = discord.Intents.default()
-intents.members = True
+class Client(discord.Client):
+    def __init__(self):
+        super().__init__(intents=discord.Intents.default())
+        self.synced = False
 
-# Create a Discord client
-client = discord.Client(intents=intents)
+    async def on_ready(self):
+        await self.wait_until_ready()
+        if not self.synced:
+            await tree.sync(guild = discord.Object(id = guild_id))
+            self.synced = True
+        print(f"Logged in as {self.user} (ID: {self.user.id}).")
+        print("-----")
 
-# Event handler for when the bot is ready
-@client.event
-async def on_ready():
-    print(f'{client.user} has connected to Discord!')
+client = Client()
+tree = app_commands.CommandTree(client)
 
-@client.event
-async def on_message(message):
-    if message.author == client.user:
-        return
-    
-    if message.content.startswith('$hello'):
-        
-        username = str(message.author)
-        user_message = str(message.content)
-        channel = str(message.channel)
+@tree.command(name = "test", description = "testing", guild = discord.Object(id = guild_id))
+async def self(interaction: discord.Interaction, name: str):
+    await interaction.response.send_message(f"Hello {name}! I was made with Discord.py!")
 
-        print(f'{username} said: {user_message} ({channel})')
+@tree.command(name="llm", description="Language Model", guild = discord.Object(id = guild_id))
+async def self(interaction: discord.Interaction, prompt: str):
+    llm = OpenAI(openai_api_key=openai_key, temperature=0.9)
+    await interaction.response.send_message(llm.predict(prompt))
 
-        await message.channel.send('Hello!')
-
-# Event handler for when a message is sent
-client.run(token)
+if __name__ == "__main__":
+    client.run(token)
